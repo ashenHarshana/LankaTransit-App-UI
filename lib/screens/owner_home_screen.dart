@@ -475,16 +475,21 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     StateSetter setSheetState,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: OutlinedButton.icon(
         icon: Icon(
-          file == null ? Icons.upload_file : Icons.check_circle,
-          color: file == null ? Colors.blue : Colors.green,
+          file == null ? Icons.upload_file_rounded : Icons.check_circle_rounded,
+          color: file == null ? Colors.grey[700] : Colors.green,
         ),
-        label: Text(file == null ? 'Upload $title' : '$title Selected'),
+        label: Text(
+          file == null ? 'Upload $title' : '$title Selected',
+          style: TextStyle(color: file == null ? Colors.grey[800] : Colors.green, fontWeight: FontWeight.bold),
+        ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          side: BorderSide(color: file == null ? Colors.blue : Colors.green),
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          backgroundColor: file == null ? Colors.grey[100] : Colors.green.withOpacity(0.1),
+          side: BorderSide(color: file == null ? Colors.grey[300]! : Colors.green, width: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         onPressed: () => _pickImage(docType, setSheetState),
       ),
@@ -495,11 +500,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
@@ -511,16 +518,19 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
               children: [
                 const Text(
                   'Register New Bus',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 25),
 
                 DropdownButtonFormField<String>(
                   value: _selectedRouteId,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Assign Route',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.alt_route, color: Colors.blueAccent),
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.alt_route_rounded, color: Colors.green),
                   ),
                   items: _availableRoutes.map((route) {
                     return DropdownMenuItem<String>(
@@ -538,72 +548,67 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
                 TextField(
                   controller: _busNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Bus Number',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Bus Plate Number',
+                    hintText: 'e.g. WP ND-1234',
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.numbers_rounded, color: Colors.green),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _capacityController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Capacity',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Passenger Capacity',
+                    hintText: 'e.g. 54',
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.airline_seat_recline_normal_rounded, color: Colors.green),
+                  ),
+                ),
+                const SizedBox(height: 25),
+                const Text('Required Documents', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 15),
+
+                _buildDocUploadButton('Registration Potha (CR)', 'registration', _registrationPotha, setSheetState),
+                _buildDocUploadButton('Insurance Card', 'insurance', _insuranceCard, setSheetState),
+                _buildDocUploadButton('Revenue License', 'revenue', _revenueLicense, setSheetState),
+                _buildDocUploadButton('Route Permit', 'permit', _routePermit, setSheetState),
+
+                const SizedBox(height: 25),
+                SizedBox(
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      elevation: 2,
+                    ),
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            setSheetState(() => _isLoading = true);
+                            bool success = await _addBus();
+                            if (success) {
+                              if (sheetContext.mounted)
+                                Navigator.pop(sheetContext);
+                            }
+                            setSheetState(() => _isLoading = false);
+                          },
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Submit Registration',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                _buildDocUploadButton(
-                  'Registration Potha (CR)',
-                  'registration',
-                  _registrationPotha,
-                  setSheetState,
-                ),
-                _buildDocUploadButton(
-                  'Insurance Card',
-                  'insurance',
-                  _insuranceCard,
-                  setSheetState,
-                ),
-                _buildDocUploadButton(
-                  'Revenue License',
-                  'revenue',
-                  _revenueLicense,
-                  setSheetState,
-                ),
-                _buildDocUploadButton(
-                  'Route Permit',
-                  'permit',
-                  _routePermit,
-                  setSheetState,
-                ),
-
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                  onPressed: _isLoading
-                      ? null
-                      : () async {
-                          setSheetState(() => _isLoading = true);
-                          bool success = await _addBus();
-                          if (success) {
-                            if (sheetContext.mounted)
-                              Navigator.pop(sheetContext);
-                          }
-                          setSheetState(() => _isLoading = false);
-                        },
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Submit Bus Data',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                ),
               ],
             ),
           ),
@@ -618,11 +623,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
@@ -635,70 +642,49 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
             children: [
               Text(
                 'Resubmit Docs: ${bus['busNumber']}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.orange),
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              Text(
-                'Only upload the documents that are unclear or rejected.',
-                style: TextStyle(
-                  color: Colors.orange[800],
-                  fontStyle: FontStyle.italic,
+              const Text(
+                'Please upload the rejected documents again.',
+                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 25),
+
+              _buildDocUploadButton('Registration Potha (CR)', 'registration', _registrationPotha, setSheetState),
+              _buildDocUploadButton('Insurance Card', 'insurance', _insuranceCard, setSheetState),
+              _buildDocUploadButton('Revenue License', 'revenue', _revenueLicense, setSheetState),
+              _buildDocUploadButton('Route Permit', 'permit', _routePermit, setSheetState),
+
+              const SizedBox(height: 25),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setSheetState(() => isUpdating = true);
+                          bool success = await _resubmitBusDocs(bus['id']);
+                          if (success && sheetContext.mounted)
+                            Navigator.pop(sheetContext);
+                          setSheetState(() => isUpdating = false);
+                        },
+                  child: isUpdating
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Resubmit Documents',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
-              const SizedBox(height: 20),
-
-              _buildDocUploadButton(
-                'Registration Potha (CR)',
-                'registration',
-                _registrationPotha,
-                setSheetState,
-              ),
-              _buildDocUploadButton(
-                'Insurance Card',
-                'insurance',
-                _insuranceCard,
-                setSheetState,
-              ),
-              _buildDocUploadButton(
-                'Revenue License',
-                'revenue',
-                _revenueLicense,
-                setSheetState,
-              ),
-              _buildDocUploadButton(
-                'Route Permit',
-                'permit',
-                _routePermit,
-                setSheetState,
-              ),
-
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                ),
-                onPressed: isUpdating
-                    ? null
-                    : () async {
-                        setSheetState(() => isUpdating = true);
-                        bool success = await _resubmitBusDocs(bus['id']);
-                        if (success && sheetContext.mounted)
-                          Navigator.pop(sheetContext);
-                        setSheetState(() => isUpdating = false);
-                      },
-                child: isUpdating
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Resubmit Documents',
-                        style: TextStyle(fontSize: 16),
-                      ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -729,11 +715,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
@@ -745,27 +733,25 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Assign Crew for ${bus['busNumber']}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Assign Crew: ${bus['busNumber']}',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
 
               DropdownButtonFormField<String>(
                 value: selectedDriverId,
-                decoration: const InputDecoration(
-                  labelText: 'Select Driver (Approved Only)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.sports_motorsports),
+                decoration: InputDecoration(
+                  labelText: 'Select Driver',
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.sports_motorsports_rounded, color: Colors.green),
                 ),
                 items: drivers.map((driver) {
                   return DropdownMenuItem<String>(
                     value: driver['id'].toString(),
-                    child: Text(
-                      '${driver['name']} (${driver['phone'] ?? 'No phone'})',
-                    ),
+                    child: Text('${driver['name']} (${driver['phone'] ?? 'N/A'})'),
                   );
                 }).toList(),
                 onChanged: (val) => setSheetState(() => selectedDriverId = val),
@@ -774,54 +760,48 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
               DropdownButtonFormField<String>(
                 value: selectedConductorId,
-                decoration: const InputDecoration(
-                  labelText: 'Select Conductor (Approved Only)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.confirmation_number),
+                decoration: InputDecoration(
+                  labelText: 'Select Conductor',
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.badge_rounded, color: Colors.green),
                 ),
                 items: conductors.map((cond) {
                   return DropdownMenuItem<String>(
                     value: cond['id'].toString(),
-                    child: Text(
-                      '${cond['name']} (${cond['phone'] ?? 'No phone'})',
-                    ),
+                    child: Text('${cond['name']} (${cond['phone'] ?? 'N/A'})'),
                   );
                 }).toList(),
-                onChanged: (val) =>
-                    setSheetState(() => selectedConductorId = val),
+                onChanged: (val) => setSheetState(() => selectedConductorId = val),
               ),
 
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+              const SizedBox(height: 30),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          setSheetState(() => isSubmitting = true);
+                          int? dId = selectedDriverId != null ? int.parse(selectedDriverId!) : null;
+                          int? cId = selectedConductorId != null ? int.parse(selectedConductorId!) : null;
+
+                          bool success = await _assignCrew(bus['id'], dId, cId);
+                          if (success && sheetContext.mounted) Navigator.pop(sheetContext);
+                          setSheetState(() => isSubmitting = false);
+                        },
+                  child: isSubmitting
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save Assignments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-                onPressed: isSubmitting
-                    ? null
-                    : () async {
-                        setSheetState(() => isSubmitting = true);
-                        int? dId = selectedDriverId != null
-                            ? int.parse(selectedDriverId!)
-                            : null;
-                        int? cId = selectedConductorId != null
-                            ? int.parse(selectedConductorId!)
-                            : null;
-
-                        bool success = await _assignCrew(bus['id'], dId, cId);
-                        if (success && sheetContext.mounted)
-                          Navigator.pop(sheetContext);
-                        setSheetState(() => isSubmitting = false);
-                      },
-                child: isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Save Assignments',
-                        style: TextStyle(fontSize: 16),
-                      ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -833,11 +813,13 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
@@ -850,87 +832,98 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Add Driver / Conductor',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  'Add New Staff Member',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 TextField(
                   controller: _staffNameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Full Name',
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.person_outline_rounded, color: Colors.green),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _staffEmailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Email Address',
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.green),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _staffPhoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Phone Number',
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.phone_outlined, color: Colors.green),
                   ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
                   controller: _staffPasswordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Create Password',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                  decoration: InputDecoration(
+                    labelText: 'Temporary Password',
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: Colors.green),
                   ),
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
                   value: _selectedRole,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Role',
-                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    prefixIcon: const Icon(Icons.work_outline_rounded, color: Colors.green),
                   ),
                   items: const [
                     DropdownMenuItem(value: 'DRIVER', child: Text('Driver')),
-                    DropdownMenuItem(
-                      value: 'CONDUCTOR',
-                      child: Text('Conductor'),
-                    ),
+                    DropdownMenuItem(value: 'CONDUCTOR', child: Text('Conductor')),
                   ],
                   onChanged: (val) {
                     if (val != null) setSheetState(() => _selectedRole = val);
                   },
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                const SizedBox(height: 30),
+                SizedBox(
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            setSheetState(() => _isLoading = true);
+                            bool success = await _addStaff();
+                            if (success && sheetContext.mounted) Navigator.pop(sheetContext);
+                            setSheetState(() => _isLoading = false);
+                          },
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Register Staff Member', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  onPressed: _isLoading
-                      ? null
-                      : () async {
-                          setSheetState(() => _isLoading = true);
-                          bool success = await _addStaff();
-                          if (success && sheetContext.mounted)
-                            Navigator.pop(sheetContext);
-                          setSheetState(() => _isLoading = false);
-                        },
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'Add Staff Member',
-                          style: TextStyle(fontSize: 16),
-                        ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -940,26 +933,22 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   void _showEditStaffSheet(Map<String, dynamic> staff) {
-    final TextEditingController editNameCtrl = TextEditingController(
-      text: staff['name'],
-    );
-    final TextEditingController editEmailCtrl = TextEditingController(
-      text: staff['email'],
-    );
-    final TextEditingController editPhoneCtrl = TextEditingController(
-      text: staff['phone'] ?? '',
-    );
+    final TextEditingController editNameCtrl = TextEditingController(text: staff['name']);
+    final TextEditingController editEmailCtrl = TextEditingController(text: staff['email']);
+    final TextEditingController editPhoneCtrl = TextEditingController(text: staff['phone'] ?? '');
     String editRole = staff['role'] ?? 'DRIVER';
     bool isUpdating = false;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
@@ -970,81 +959,83 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Edit Staff Details',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
+              const Text('Edit Staff Details', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green), textAlign: TextAlign.center),
+              const SizedBox(height: 30),
               TextField(
                 controller: editNameCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Full Name',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.person_outline_rounded, color: Colors.green),
                 ),
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: editEmailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Email Address',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.green),
                 ),
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: editPhoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: Colors.green),
                 ),
               ),
               const SizedBox(height: 15),
               DropdownButtonFormField<String>(
                 value: editRole,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Role',
-                  border: OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                  prefixIcon: const Icon(Icons.work_outline_rounded, color: Colors.green),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'DRIVER', child: Text('Driver')),
-                  DropdownMenuItem(
-                    value: 'CONDUCTOR',
-                    child: Text('Conductor'),
-                  ),
+                  DropdownMenuItem(value: 'CONDUCTOR', child: Text('Conductor')),
                 ],
                 onChanged: (val) {
                   if (val != null) setSheetState(() => editRole = val);
                 },
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+              const SizedBox(height: 30),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  ),
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setSheetState(() => isUpdating = true);
+                          bool success = await _updateStaff(staff['id'], editNameCtrl.text, editEmailCtrl.text, editPhoneCtrl.text, editRole);
+                          if (success && sheetContext.mounted) Navigator.pop(sheetContext);
+                          setSheetState(() => isUpdating = false);
+                        },
+                  child: isUpdating
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Save Changes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
-                onPressed: isUpdating
-                    ? null
-                    : () async {
-                        setSheetState(() => isUpdating = true);
-                        bool success = await _updateStaff(
-                          staff['id'],
-                          editNameCtrl.text,
-                          editEmailCtrl.text,
-                          editPhoneCtrl.text,
-                          editRole,
-                        );
-                        if (success && sheetContext.mounted)
-                          Navigator.pop(sheetContext);
-                        setSheetState(() => isUpdating = false);
-                      },
-                child: isUpdating
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Update Staff'),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -1052,30 +1043,26 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
     );
   }
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 5),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 30),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 28),
           ),
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+          const SizedBox(height: 15),
+          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
+          const SizedBox(height: 4),
+          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -1083,225 +1070,170 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
 
   Widget _buildDashboardTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 10),
           const Text(
-            'Welcome, Owner! 🚌',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
-            ),
-            textAlign: TextAlign.center,
+            'Overview',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
           ),
           const SizedBox(height: 20),
 
-          // --- REVENUE CARD ---
           Container(
-            padding: const EdgeInsets.all(25),
+            padding: const EdgeInsets.all(30),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Colors.deepPurple, Colors.purpleAccent],
-              ),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+              gradient: const LinearGradient(colors: [Colors.green, Color(0xFF43A047)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [BoxShadow(color: Colors.green.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))],
             ),
             child: Column(
               children: [
-                const Text(
-                  'Total Revenue',
-                  style: TextStyle(color: Colors.white70, fontSize: 18),
-                ),
+                const Text('Total Revenue', style: TextStyle(color: Colors.whiteCC, fontSize: 16, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 10),
                 Text(
                   'Rs. ${_totalRevenue.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(height: 5),
+                const Text('Lifetime Earnings', style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
+          const SizedBox(height: 25),
+
+          Row(
+            children: [
+              Expanded(child: _buildStatCard('Tickets', _totalTickets.toString(), Icons.confirmation_number_rounded, Colors.orange)),
+              const SizedBox(width: 15),
+              Expanded(child: _buildStatCard('Active Buses', _totalBuses.toString(), Icons.directions_bus_rounded, Colors.green)),
+            ],
+          ),
+          const SizedBox(height: 35),
+          const Text('Quick Actions', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87)),
           const SizedBox(height: 20),
 
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
-                  'Tickets',
-                  _totalTickets.toString(),
-                  Icons.confirmation_number,
-                  Colors.orange,
-                ),
+                child: _buildQuickActionButton('Register Bus', Icons.add_bus_rounded, Colors.green, _showAddBusSheet),
               ),
               const SizedBox(width: 15),
               Expanded(
-                child: _buildStatCard(
-                  'Buses',
-                  _totalBuses.toString(),
-                  Icons.directions_bus,
-                  Colors.green,
-                ),
+                child: _buildQuickActionButton('Add Staff', Icons.person_add_rounded, Colors.green, _showAddStaffSheet),
               ),
             ],
-          ),
-          const SizedBox(height: 30),
-
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: InkWell(
-              onTap: _showAddBusSheet,
-              borderRadius: BorderRadius.circular(15),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 30.0, horizontal: 20.0),
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.directions_bus,
-                      size: 60,
-                      color: Colors.blueAccent,
-                    ),
-                    SizedBox(height: 15),
-                    Text(
-                      'Register New Bus',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: InkWell(
-              onTap: _showAddStaffSheet,
-              borderRadius: BorderRadius.circular(15),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 30.0, horizontal: 20.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.person_add, size: 60, color: Colors.green),
-                    SizedBox(height: 15),
-                    Text(
-                      'Add Driver / Conductor',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildQuickActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 25),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 12),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMyFleetTab() {
-    if (_isLoadingBuses)
-      return const Center(child: CircularProgressIndicator());
-    if (_myBuses.isEmpty)
-      return const Center(
-        child: Text('No buses found!', style: TextStyle(fontSize: 16)),
-      );
+    if (_isLoadingBuses) return const Center(child: CircularProgressIndicator(color: Colors.green));
+    if (_myBuses.isEmpty) return const Center(child: Text('No buses registered yet.', style: TextStyle(color: Colors.grey)));
 
     return RefreshIndicator(
       onRefresh: _fetchMyBuses,
+      color: Colors.green,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         itemCount: _myBuses.length,
         itemBuilder: (context, index) {
           var bus = _myBuses[index];
           String status = bus['status'] ?? 'PENDING';
-          Color statusColor = Colors.orange;
-          IconData statusIcon = Icons.pending;
-
-          if (status == 'APPROVED') {
-            statusColor = Colors.green;
-            statusIcon = Icons.check_circle;
-          } else if (status == 'REJECTED') {
-            statusColor = Colors.red;
-            statusIcon = Icons.cancel;
-          } else if (status == 'RESUBMIT') {
-            statusColor = Colors.blueAccent;
-            statusIcon = Icons.upload_file;
-          }
-
-          Widget? trailingWidget;
-          if (status == 'RESUBMIT' || status == 'REJECTED') {
-            trailingWidget = ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: statusColor,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => _showResubmitBusSheet(bus),
-              child: const Text('Edit'),
-            );
-          } else if (status == 'APPROVED') {
-            trailingWidget = ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () => _showAssignCrewSheet(bus),
-              icon: const Icon(Icons.people, size: 18),
-              label: const Text('Assign Crew'),
-            );
-          }
+          Color statusColor = status == 'APPROVED' ? Colors.green : (status == 'REJECTED' ? Colors.red : Colors.orange);
 
           return Card(
-            elevation: 3,
-            margin: const EdgeInsets.only(bottom: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(15),
-              leading: CircleAvatar(
-                radius: 25,
-                backgroundColor: statusColor.withOpacity(0.2),
-                child: Icon(statusIcon, color: statusColor, size: 30),
+            elevation: 0,
+            margin: const EdgeInsets.only(bottom: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.2))),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(15)),
+                        child: const Icon(Icons.directions_bus_rounded, color: Colors.green, size: 28),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(bus['busNumber'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                            const SizedBox(height: 4),
+                            Text('Route ID: ${bus['routeId'] ?? 'Not Assigned'}', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                        child: Text(status, style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Current Crew', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                          const SizedBox(height: 5),
+                          Text(
+                            bus['driverId'] != null ? 'Driver Assigned' : 'No Driver',
+                            style: TextStyle(color: bus['driverId'] != null ? Colors.black87 : Colors.red[300], fontSize: 13, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                      if (status == 'APPROVED')
+                        ElevatedButton.icon(
+                          onPressed: () => _showAssignCrewSheet(bus),
+                          icon: const Icon(Icons.people_outline_rounded, size: 16),
+                          label: const Text('Assign'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        )
+                      else if (status == 'RESUBMIT' || status == 'REJECTED')
+                        TextButton(
+                          onPressed: () => _showResubmitBusSheet(bus),
+                          child: const Text('Update Docs', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                        ),
+                    ],
+                  ),
+                ],
               ),
-              title: Text(
-                bus['busNumber'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-              subtitle: Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Route ID: ${bus['routeId'] ?? 'N/A'}\nDriver ID: ${bus['driverId'] ?? 'Unassigned'} | Cond: ${bus['conductorId'] ?? 'Unassigned'}\nStatus: $status',
-                  style: TextStyle(color: Colors.grey[700], height: 1.4),
-                ),
-              ),
-              isThreeLine: true,
-              trailing: trailingWidget,
             ),
           );
         },
@@ -1310,102 +1242,46 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   }
 
   Widget _buildMyStaffTab() {
-    if (_isLoadingStaff)
-      return const Center(child: CircularProgressIndicator());
-    if (_myStaff.isEmpty)
-      return const Center(
-        child: Text(
-          'No staff members added yet!',
-          style: TextStyle(fontSize: 16),
-        ),
-      );
+    if (_isLoadingStaff) return const Center(child: CircularProgressIndicator(color: Colors.green));
+    if (_myStaff.isEmpty) return const Center(child: Text('Add your first driver or conductor.', style: TextStyle(color: Colors.grey)));
 
     return RefreshIndicator(
       onRefresh: _fetchMyStaff,
+      color: Colors.green,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         itemCount: _myStaff.length,
         itemBuilder: (context, index) {
           var staff = _myStaff[index];
           String role = staff['role'] ?? 'USER';
           String status = staff['status'] ?? 'PENDING';
-          Color statusColor = status == 'APPROVED'
-              ? Colors.green
-              : (status == 'REJECTED'
-                    ? Colors.red
-                    : (status == 'RESUBMIT'
-                          ? Colors.blueAccent
-                          : Colors.orange));
+          Color statusColor = status == 'APPROVED' ? Colors.green : Colors.orange;
 
           return Card(
-            elevation: 3,
+            elevation: 0,
             margin: const EdgeInsets.only(bottom: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.2))),
             child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               leading: CircleAvatar(
-                backgroundColor: statusColor.withOpacity(0.2),
-                child: Icon(
-                  role == 'DRIVER'
-                      ? Icons.sports_motorsports
-                      : Icons.confirmation_number,
-                  color: statusColor,
-                ),
+                backgroundColor: Colors.green.withOpacity(0.1),
+                child: Icon(role == 'DRIVER' ? Icons.sports_motorsports_rounded : Icons.confirmation_num_rounded, color: Colors.green),
               ),
-              title: Text(
-                staff['name'],
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+              title: Text(staff['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text('$role | ${staff['phone'] ?? 'No Phone'}\nStatus: $status', style: const TextStyle(fontSize: 13)),
               ),
-              subtitle: Text(
-                '$role | ${staff['phone'] ?? staff['email']}\nStatus: $status',
-                style: const TextStyle(height: 1.4),
-              ),
-              isThreeLine: true,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.orange),
-                    onPressed: () => _showEditStaffSheet(staff),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Remove Staff?'),
-                          content: Text(
-                            'Are you sure you want to remove ${staff['name']}?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('Cancel'),
-                            ),
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                              ),
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _deleteStaff(staff['id']);
-                              },
-                              child: const Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+              trailing: PopupMenuButton<String>(
+                onSelected: (val) {
+                  if (val == 'edit') _showEditStaffSheet(staff);
+                  if (val == 'delete') _deleteStaff(staff['id']);
+                },
+                itemBuilder: (ctx) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(value: 'delete', child: Text('Remove', style: TextStyle(color: Colors.red))),
                 ],
+                icon: const Icon(Icons.more_vert_rounded),
               ),
             ),
           );
@@ -1417,44 +1293,35 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Owner Dashboard',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Fleet Management', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          tabs: const [
-            Tab(icon: Icon(Icons.dashboard), text: 'Home'),
-            Tab(icon: Icon(Icons.directions_bus), text: 'My Fleet'),
-            Tab(icon: Icon(Icons.people), text: 'My Staff'),
-          ],
-        ),
+        elevation: 0,
         actions: [
+          IconButton(icon: const Icon(Icons.person_outline_rounded), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()))),
           IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             onPressed: () async {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               await prefs.clear();
               if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          tabs: const [
+            Tab(text: 'Home'),
+            Tab(text: 'My Fleet'),
+            Tab(text: 'My Staff'),
+          ],
+        ),
       ),
       body: TabBarView(
         controller: _tabController,

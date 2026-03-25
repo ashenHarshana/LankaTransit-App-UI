@@ -85,17 +85,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
-          'Find Buses',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'LankaTransit',
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.confirmation_num),
+            icon: const Icon(Icons.confirmation_num_outlined),
             tooltip: 'My Tickets',
             onPressed: () {
               Navigator.push(
@@ -107,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline_rounded),
             tooltip: 'Profile',
             onPressed: () {
               Navigator.push(
@@ -117,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded),
             onPressed: () async {
               SharedPreferences prefs = await SharedPreferences.getInstance();
               await prefs.clear();
@@ -133,36 +134,50 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : Column(
               children: [
-                Padding(
+                Container(
                   padding: const EdgeInsets.all(16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.2),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                        ),
-                      ],
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _filterRoutes,
-                      decoration: const InputDecoration(
-                        hintText: 'Search Route No, Start or End...',
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: Colors.blueAccent,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Where are you going today?',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 15),
                       ),
-                    ),
+                      const SizedBox(height: 15),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _filterRoutes,
+                          decoration: const InputDecoration(
+                            hintText: 'Search Route No, Start or End...',
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: Colors.green,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 15),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 
@@ -171,11 +186,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? const Center(
                           child: Text(
                             'No routes found matching your search.',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
                         )
                       : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.all(12),
                           itemCount: _filteredRoutes.length,
                           itemBuilder: (context, index) {
                             final route = _filteredRoutes[index];
@@ -183,17 +198,17 @@ class _HomeScreenState extends State<HomeScreen> {
                               elevation: 2,
                               margin: const EdgeInsets.symmetric(vertical: 8),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(15),
                               ),
                               child: ListTile(
-                                contentPadding: const EdgeInsets.all(12),
-                                leading: const CircleAvatar(
+                                contentPadding: const EdgeInsets.all(16),
+                                leading: CircleAvatar(
                                   radius: 25,
-                                  backgroundColor: Colors.blueAccent,
-                                  child: Icon(
-                                    Icons.directions_bus,
-                                    color: Colors.white,
-                                    size: 28,
+                                  backgroundColor: Colors.green.withOpacity(0.1),
+                                  child: const Icon(
+                                    Icons.directions_bus_rounded,
+                                    color: Colors.green,
+                                    size: 30,
                                   ),
                                 ),
                                 title: Text(
@@ -204,19 +219,35 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 subtitle: Padding(
-                                  padding: const EdgeInsets.only(top: 6.0),
-                                  child: Text(
-                                    '${route['startLocation'] ?? 'Unknown'} ➔ ${route['endLocation'] ?? 'Unknown'}',
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.location_on, size: 16, color: Colors.green),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          '${route['startLocation']} ➔ ${route['endLocation']}',
+                                          style: TextStyle(
+                                            color: Colors.grey[700],
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                trailing: const Icon(
-                                  Icons.arrow_forward_ios,
-                                  size: 16,
-                                  color: Colors.blueAccent,
+                                trailing: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 16,
+                                    color: Colors.green,
+                                  ),
                                 ),
 
                                 onTap: () {
@@ -243,14 +274,14 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => const LiveMapScreen()),
           );
         },
-        icon: const Icon(Icons.map, size: 28),
+        icon: const Icon(Icons.map_rounded, size: 24),
         label: const Text(
           'Live Radar',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 6,
       ),
     );
   }

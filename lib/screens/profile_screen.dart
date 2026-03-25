@@ -142,11 +142,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          ),
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
             left: 24,
@@ -159,62 +161,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               const Text(
                 'Edit Profile',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Full Name',
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.person_outline, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                 ),
               ),
               const SizedBox(height: 15),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                 ),
               ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
+              const SizedBox(height: 25),
+              SizedBox(
+                height: 55,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 2,
+                  ),
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setSheetState(() => isUpdating = true);
+                          bool success = await _updateProfile(
+                            nameCtrl.text,
+                            emailCtrl.text,
+                            phoneCtrl.text,
+                          );
+                          if (success && sheetContext.mounted)
+                            Navigator.pop(sheetContext);
+                          setSheetState(() => isUpdating = false);
+                        },
+                  child: isUpdating
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Save Changes',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
                 ),
-                onPressed: isUpdating
-                    ? null
-                    : () async {
-                        setSheetState(() => isUpdating = true);
-                        bool success = await _updateProfile(
-                          nameCtrl.text,
-                          emailCtrl.text,
-                          phoneCtrl.text,
-                        );
-                        if (success && sheetContext.mounted)
-                          Navigator.pop(sheetContext);
-                        setSheetState(() => isUpdating = false);
-                      },
-                child: isUpdating
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Save Changes',
-                        style: TextStyle(fontSize: 16),
-                      ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -226,6 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
         title: const Text(
           'Delete Account',
           style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
@@ -236,10 +253,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
             onPressed: () {
               Navigator.pop(ctx);
               _deleteAccount();
@@ -257,158 +277,156 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text(
           'My Profile',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : _userData == null
           ? const Center(child: Text('Failed to load profile data.'))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
-
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.blue[100],
-                    backgroundImage: _userData!['profilePhotoUrl'] != null
-                        ? NetworkImage(
-                            '$baseUrl${_userData!['profilePhotoUrl']}',
-                          )
-                        : null,
-                    child: _userData!['profilePhotoUrl'] == null
-                        ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.blueAccent,
-                          )
-                        : null,
+                  Stack(
+                    alignment: Alignment.bottomRight,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 60,
+                          backgroundColor: Colors.green.withOpacity(0.1),
+                          backgroundImage: _userData!['profilePhotoUrl'] != null
+                              ? NetworkImage(
+                                  '$baseUrl${_userData!['profilePhotoUrl']}',
+                                )
+                              : null,
+                          child: _userData!['profilePhotoUrl'] == null
+                              ? const Icon(
+                                  Icons.person_rounded,
+                                  size: 70,
+                                  color: Colors.green,
+                                )
+                              : null,
+                        ),
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        child: IconButton(
+                          onPressed: _showEditProfileSheet,
+                          icon: const Icon(Icons.edit_rounded, color: Colors.green, size: 20),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
 
                   Text(
                     _userData!['name'] ?? 'Unknown User',
                     style: const TextStyle(
-                      fontSize: 26,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(
-                    _userData!['role'] ?? 'USER',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _userData!['role'] ?? 'USER',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 35),
 
                   Card(
-                    elevation: 2,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(color: Colors.grey.withOpacity(0.2)),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(15.0),
+                      padding: const EdgeInsets.all(8.0),
                       child: Column(
                         children: [
                           ListTile(
-                            leading: const Icon(
-                              Icons.email,
-                              color: Colors.blueAccent,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                              child: const Icon(Icons.email_outlined, color: Colors.green),
                             ),
-                            title: const Text('Email Address'),
+                            title: const Text('Email Address', style: TextStyle(color: Colors.grey, fontSize: 13)),
                             subtitle: Text(
                               _userData!['email'] ?? 'Not provided',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
+                              style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500),
                             ),
                           ),
-                          const Divider(),
+                          const Divider(indent: 70, endIndent: 20),
                           ListTile(
-                            leading: const Icon(
-                              Icons.phone,
-                              color: Colors.green,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                              child: const Icon(Icons.phone_outlined, color: Colors.green),
                             ),
-                            title: const Text('Phone Number'),
+                            title: const Text('Phone Number', style: TextStyle(color: Colors.grey, fontSize: 13)),
                             subtitle: Text(
                               _userData!['phone'] ?? 'Not provided',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                              ),
+                              style: const TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500),
                             ),
                           ),
-                          const Divider(),
+                          const Divider(indent: 70, endIndent: 20),
                           ListTile(
-                            leading: const Icon(
-                              Icons.verified_user,
-                              color: Colors.orange,
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+                              child: const Icon(Icons.verified_user_outlined, color: Colors.green),
                             ),
-                            title: const Text('Account Status'),
+                            title: const Text('Account Status', style: TextStyle(color: Colors.grey, fontSize: 13)),
                             subtitle: Text(
                               _userData!['status'] ?? 'UNKNOWN',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 40),
 
-                  // Buttons
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.edit),
-                      label: const Text(
-                        'Edit Profile',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      onPressed: _showEditProfileSheet,
-                    ),
-                  ),
-                  const SizedBox(height: 15),
-                  SizedBox(
-                    width: double.infinity,
+                    height: 55,
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       ),
-                      icon: const Icon(Icons.delete_forever),
+                      icon: const Icon(Icons.delete_forever_rounded),
                       label: const Text(
-                        'Delete Account',
-                        style: TextStyle(fontSize: 18),
+                        'Delete My Account',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       onPressed: _showDeleteConfirmation,
                     ),
