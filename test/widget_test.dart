@@ -11,13 +11,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lankatransit_app/main.dart';
 
 void main() {
-  testWidgets('LankaTransitApp loads', (WidgetTester tester) async {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(
-      const LankaTransitApp(isLoggedIn: false, role: 'PASSENGER'),
-    );
+    await tester.pumpWidget(const MyApp());
 
-    // Verify that the app loads without error
-    expect(find.byType(MaterialApp), findsOneWidget);
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
+
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
+
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
   });
 }
