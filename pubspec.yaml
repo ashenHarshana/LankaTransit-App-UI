@@ -14,9 +14,15 @@ dependencies:
   http: ^1.1.0
   shared_preferences: ^2.2.2
   qr_flutter: ^4.1.0
+<<<<<<< Updated upstream
   image_picker: ^1.0.4
   geolocator: ^10.1.0
   mobile_scanner: ^3.4.1
+=======
+  image_picker: ^1.2.1
+  geolocator: ^11.0.1  
+  mobile_scanner: ^7.2.0
+>>>>>>> Stashed changes
   google_maps_flutter: ^2.5.0
 
 dev_dependencies:
