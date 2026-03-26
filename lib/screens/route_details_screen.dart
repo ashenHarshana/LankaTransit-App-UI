@@ -2,11 +2,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'ticket_screen.dart';
 
 class RouteDetailsScreen extends StatefulWidget {
   final dynamic routeData;
-
   const RouteDetailsScreen({super.key, required this.routeData});
 
   @override
@@ -14,6 +14,7 @@ class RouteDetailsScreen extends StatefulWidget {
 }
 
 class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
+  final String baseUrl = "https://navith-25-lankatransit-backend.hf.space";
   List<dynamic> _halts = [];
   bool _isLoading = true;
   bool _isBooking = false;
@@ -21,6 +22,9 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
   dynamic _selectedStartHalt;
   dynamic _selectedEndHalt;
   double _ticketPrice = 0.0;
+
+  GoogleMapController? _mapController;
+  Set<Marker> _markers = {};
 
   @override
   void initState() {
@@ -30,88 +34,114 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
 
   Future<void> fetchHalts() async {
     final routeId = widget.routeData['id'];
-    final url = Uri.parse(
-      'https://navith-25-lankatransit-backend.hf.space/api/routes/$routeId/halts',
-    );
+    final url = Uri.parse('$baseUrl/api/routes/$routeId/halts');
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         setState(() {
           _halts = jsonDecode(response.body);
           _isLoading = false;
+          _updateMarkers();
         });
-      } else {
-        showError('Failed to load halts');
       }
     } catch (e) {
-      showError('Server error.');
+      _showSnackBar('Server error loading halts.', Colors.red);
     }
   }
 
-  void showError(String message) {
+  void _updateMarkers() {
+    Set<Marker> tempMarkers = {};
+    for (var halt in _halts) {
+      if (halt['latitude'] != null && halt['longitude'] != null) {
+        tempMarkers.add(
+          Marker(
+            markerId: MarkerId('halt_${halt['id']}'),
+            position: LatLng(halt['latitude'], halt['longitude']),
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+            infoWindow: InfoWindow(title: halt['haltName']),
+            onTap: () {
+              _onHaltTapped(halt);
+            },
+          ),
+        );
+      }
+    }
     setState(() {
-      _isLoading = false;
-      _isBooking = false;
+      _markers = tempMarkers;
     });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
+  }
+
+  void _onHaltTapped(dynamic halt) {
+    if (_selectedStartHalt == null) {
+      setState(() {
+        _selectedStartHalt = halt;
+      });
+    } else if (_selectedEndHalt == null && halt != _selectedStartHalt) {
+      setState(() {
+        _selectedEndHalt = halt;
+      });
+    } else {
+      setState(() {
+        _selectedStartHalt = halt;
+        _selectedEndHalt = null;
+      });
+    }
+    _calculateFare();
   }
 
   void _calculateFare() {
     if (_selectedStartHalt != null && _selectedEndHalt != null) {
-      double startDist = (_selectedStartHalt['distanceFromStart'] as num)
-          .toDouble();
-      double endDist = (_selectedEndHalt['distanceFromStart'] as num)
-          .toDouble();
+      double startDist = (_selectedStartHalt['distanceFromStart'] as num).toDouble();
+      double endDist = (_selectedEndHalt['distanceFromStart'] as num).toDouble();
       double baseFare = (widget.routeData['baseFarePerKm'] as num).toDouble();
-
       double distance = (endDist - startDist).abs();
-
       setState(() {
         _ticketPrice = distance * baseFare;
+        if (_ticketPrice < 20) _ticketPrice = 20.0; // Minimum fare
+      });
+    } else {
+      setState(() {
+        _ticketPrice = 0.0;
       });
     }
   }
 
-  Future<void> _bookTicket() async {
-    setState(() {
-      _isBooking = true;
-    });
+  Future<void> _handleBooking() async {
+    if (_selectedStartHalt == null || _selectedEndHalt == null) return;
 
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String realEmail = prefs.getString('userEmail') ?? 'guest@lankatransit.com';
-
-    final url = Uri.parse(
-      'https://navith-25-lankatransit-backend.hf.space/api/routes/book',
-    );
+    setState(() => _isBooking = true);
 
     try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('jwt_token');
+      String? email = prefs.getString('userEmail');
+
       final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$baseUrl/api/routes/book'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
         body: jsonEncode({
+          'userEmail': email,
           'routeId': widget.routeData['id'],
-          'startHalt': _selectedStartHalt['haltName'],
-          'endHalt': _selectedEndHalt['haltName'],
+          'startLocation': _selectedStartHalt['haltName'],
+          'endLocation': _selectedEndHalt['haltName'],
           'fare': _ticketPrice,
-          'userEmail': realEmail,
+          'status': 'VALID'
         }),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final booking = jsonDecode(response.body);
         if (!mounted) return;
-
-        final responseData = jsonDecode(response.body);
-
-        Navigator.push(
+        
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => TicketScreen(
-              ticketId: responseData['id'],
+              ticketId: booking['id'],
               routeData: widget.routeData,
               startHalt: _selectedStartHalt,
               endHalt: _selectedEndHalt,
@@ -120,217 +150,186 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
           ),
         );
       } else {
-        showError('Failed to save booking. Please try again!');
+        _showSnackBar('Booking failed. Please try again.', Colors.red);
       }
     } catch (e) {
-      showError('Server error while booking!');
+      _showSnackBar('Connection error.', Colors.red);
     } finally {
-      setState(() {
-        _isBooking = false;
-      });
+      if (mounted) setState(() => _isBooking = false);
     }
+  }
+
+  void _showSnackBar(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: Text('Route ${widget.routeData['routeNumber']} Details'),
-        backgroundColor: Colors.blueAccent,
+        title: Text('Route ${widget.routeData['routeNumber']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Colors.green))
           : Column(
+        children: [
+          // --- MAP SECTION ---
+          Expanded(
+            flex: 3,
+            child: Stack(
               children: [
-                Expanded(
-                  child: _halts.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Me parata thama halts add karala naha. 🚏',
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _halts.length,
-                          itemBuilder: (context, index) {
-                            final halt = _halts[index];
-                            return Card(
-                              elevation: 2,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  backgroundColor: Colors.blue.shade50,
-                                  child: Text(
-                                    halt['sequenceOrder'].toString(),
-                                    style: const TextStyle(
-                                      color: Colors.blueAccent,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  halt['haltName'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  'Distance: ${halt['distanceFromStart']} km',
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _halts.isNotEmpty && _halts[0]['latitude'] != null
+                        ? LatLng(_halts[0]['latitude'], _halts[0]['longitude'])
+                        : const LatLng(6.9271, 79.8612),
+                    zoom: 12,
+                  ),
+                  onMapCreated: (controller) => _mapController = controller,
+                  markers: _markers,
+                  myLocationEnabled: true,
+                  zoomControlsEnabled: false,
                 ),
-
-                if (_halts.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(20),
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.shade300,
-                          blurRadius: 10,
-                          offset: const Offset(0, -5),
-                        ),
-                      ],
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'Book Your Ticket',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        DropdownButtonFormField<dynamic>(
-                          decoration: InputDecoration(
-                            labelText: 'From (Start Halt)',
-                            prefixIcon: const Icon(
-                              Icons.location_on,
-                              color: Colors.green,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          value: _selectedStartHalt,
-                          items: _halts.map((halt) {
-                            return DropdownMenuItem<dynamic>(
-                              value: halt,
-                              child: Text(halt['haltName']),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedStartHalt = value;
-                              _calculateFare();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 15),
-
-                        DropdownButtonFormField<dynamic>(
-                          decoration: InputDecoration(
-                            labelText: 'To (End Halt)',
-                            prefixIcon: const Icon(
-                              Icons.location_on,
-                              color: Colors.red,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          value: _selectedEndHalt,
-                          items: _halts.map((halt) {
-                            return DropdownMenuItem<dynamic>(
-                              value: halt,
-                              child: Text(halt['haltName']),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedEndHalt = value;
-                              _calculateFare();
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 20),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Total Fare',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  'Rs. ${_ticketPrice.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blueAccent,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 30,
-                                  vertical: 15,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: (_ticketPrice > 0 && !_isBooking)
-                                  ? _bookTicket
-                                  : null,
-                              child: _isBooking
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Buy Ticket',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    child: const Text(
+                      "Select your Start and End halts from the list below or tap on the map markers.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
+                ),
               ],
             ),
+          ),
+
+          // --- SELECTION SECTION ---
+          Expanded(
+            flex: 4,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
+              ),
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  const Text("Journey Details", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                  const SizedBox(height: 20),
+                  
+                  // Start Halt Dropdown
+                  DropdownButtonFormField<dynamic>(
+                    decoration: InputDecoration(
+                      labelText: 'Starting From',
+                      prefixIcon: const Icon(Icons.location_on, color: Colors.green),
+                      filled: true,
+                      fillColor: Colors.green.withOpacity(0.05),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    ),
+                    value: _selectedStartHalt,
+                    hint: const Text("Select Entry Point"),
+                    items: _halts.map((h) => DropdownMenuItem(value: h, child: Text(h['haltName']))).toList(),
+                    onChanged: (val) {
+                      setState(() { _selectedStartHalt = val; });
+                      _calculateFare();
+                    },
+                  ),
+                  const SizedBox(height: 15),
+                  
+                  // End Halt Dropdown
+                  DropdownButtonFormField<dynamic>(
+                    decoration: InputDecoration(
+                      labelText: 'Going To',
+                      prefixIcon: const Icon(Icons.flag, color: Colors.redAccent),
+                      filled: true,
+                      fillColor: Colors.green.withOpacity(0.05),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                    ),
+                    value: _selectedEndHalt,
+                    hint: const Text("Select Destination"),
+                    items: _halts.map((h) => DropdownMenuItem(value: h, child: Text(h['haltName']))).toList(),
+                    onChanged: (val) {
+                      setState(() { _selectedEndHalt = val; });
+                      _calculateFare();
+                    },
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Fare Summary Card
+                  if (_ticketPrice > 0)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.green.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text("Estimated Fare", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                              Text("Rs. ${_ticketPrice.toStringAsFixed(2)}", 
+                                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                            ],
+                          ),
+                          const Divider(height: 20),
+                          const Row(
+                            children: [
+                              Icon(Icons.info_outline, size: 16, color: Colors.grey),
+                              SizedBox(width: 8),
+                              Text("Final fare will be confirmed on booking.", style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // Bottom Booking Button
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.1))),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  elevation: 0,
+                ),
+                onPressed: (_ticketPrice > 0 && !_isBooking) ? _handleBooking : null,
+                child: _isBooking
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Book & Confirm Ticket', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          )
+        ],
+      ),
     );
   }
 }
