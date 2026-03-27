@@ -72,9 +72,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Create Account'),
-        backgroundColor: Colors.blueAccent,
+        title: const Text('Create Account', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -82,16 +83,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.person_add, size: 80, color: Colors.blueAccent),
-              const SizedBox(height: 20),
+              const Icon(Icons.person_add_rounded, size: 80, color: Colors.green),
+              const SizedBox(height: 10),
+              const Text(
+                'Join LankaTransit',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 30),
 
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Full Name',
-                  prefixIcon: const Icon(Icons.person),
+                  prefixIcon: const Icon(Icons.person_outline, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -101,10 +114,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: const Icon(Icons.email),
+                  labelText: 'Email Address',
+                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -115,9 +131,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: 'Phone Number',
-                  prefixIcon: const Icon(Icons.phone),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -128,21 +147,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock),
+                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
 
               DropdownButtonFormField<String>(
                 value: _selectedRole,
                 decoration: InputDecoration(
                   labelText: 'I am a...',
-                  prefixIcon: const Icon(Icons.badge),
+                  prefixIcon: const Icon(Icons.badge_outlined, color: Colors.green),
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide.none,
                   ),
                 ),
                 items: const [
@@ -162,30 +187,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 },
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 35),
 
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(15),
                     ),
+                    elevation: 2,
                   ),
                   onPressed: _isLoading ? null : registerUser,
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          'Sign Up',
+                          'Create Account',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                 ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Already have an account? '),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Text(
+                      'Sign In',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

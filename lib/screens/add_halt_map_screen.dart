@@ -97,6 +97,7 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
         setState(() {
           _polylines.add(Polyline(
               polylineId: const PolylineId('existing_route'),
+              color: Colors.green,
               color: Colors.blueAccent,
               width: 5,
               points: decodedPoints));
@@ -237,6 +238,35 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text('Add Halt to Route ${widget.routeData['routeNumber']}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Text("Distance from Start: ${distance.toStringAsFixed(2)} km",
+                  style: const TextStyle(
+                      color: Colors.green, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+                controller: haltNameCtrl,
+                decoration: InputDecoration(
+                    labelText: 'Halt Name', 
+                    filled: true,
+                    fillColor: Colors.green.withOpacity(0.05),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+            const SizedBox(height: 15),
+            TextField(
+              controller: seqCtrl,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                  labelText: 'Sequence Order (e.g., 1, 2, 3)',
+                  filled: true,
+                  fillColor: Colors.green.withOpacity(0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
         title: Text('Add Halt to Route ${widget.routeData['routeNumber']}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -261,6 +291,12 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
         ),
         actions: [
           TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -335,6 +371,10 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}'),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
@@ -355,6 +395,31 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                 child: Card(
                     child: Padding(
                         padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(color: Colors.green)))),
+          Positioned(
+            bottom: 20,
+            left: 20,
+            right: 20,
+            child: Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              color: Colors.white.withOpacity(0.9),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Long Press anywhere on the map to add a New Halt.",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      "Orange = Existing | Green/Red = Path",
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                         child: CircularProgressIndicator()))),
           Positioned(
             top: 10,

@@ -64,11 +64,44 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
     }
   }
 
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Logout Confirmation', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+        content: const Text('Are you sure you want to log out of LankaTransit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (!mounted) return;
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+            },
+            child: const Text('Yes, Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showUserDocumentDialog(Map<String, dynamic> user) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Documents: ${user['name']}'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text('Documents: ${user['name']}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
@@ -84,8 +117,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           ),
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -93,6 +126,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -100,10 +134,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   },
                   child: const Text('Approve'),
                 ),
+                const SizedBox(height: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -111,10 +147,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   },
                   child: const Text('Resubmit Docs'),
                 ),
+                const SizedBox(height: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -124,7 +162,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+                  child: const Text('Close', style: TextStyle(color: Colors.grey)),
                 ),
               ],
             ),
@@ -138,7 +176,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Bus Docs: ${bus['busNumber']}'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text('Bus Docs: ${bus['busNumber']}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
         content: SizedBox(
           width: double.maxFinite,
           child: SingleChildScrollView(
@@ -157,8 +196,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           ),
         ),
         actions: [
-          SizedBox(
-            width: double.infinity,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -166,6 +205,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -173,10 +213,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   },
                   child: const Text('Approve Bus'),
                 ),
+                const SizedBox(height: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -184,10 +226,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                   },
                   child: const Text('Resubmit Docs'),
                 ),
+                const SizedBox(height: 8),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -197,7 +241,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+                  child: const Text('Close', style: TextStyle(color: Colors.grey)),
                 ),
               ],
             ),
@@ -219,18 +263,21 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           ),
         ),
         url != null && url.isNotEmpty
-            ? Image.network(
-                '$baseUrl$url',
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  '$baseUrl$url',
                   height: 200,
-                  color: Colors.grey[200],
-                  child: const Center(
-                    child: Text(
-                      'Image not found',
-                      style: TextStyle(color: Colors.red),
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Text(
+                        'Image not found',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
                 ),
@@ -305,18 +352,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           'Admin Dashboard',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.redAccent,
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           tabs: const [
-            Tab(icon: Icon(Icons.people), text: 'Users'),
-            Tab(icon: Icon(Icons.directions_bus), text: 'Buses'),
+            Tab(icon: Icon(Icons.people_alt_rounded), text: 'Users'),
+            Tab(icon: Icon(Icons.directions_bus_rounded), text: 'Buses'),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.business_center),
+            icon: const Icon(Icons.business_center_rounded),
             tooltip: 'Manage Owners',
             onPressed: () {
               Navigator.push(
@@ -328,7 +379,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.map),
+            icon: const Icon(Icons.map_rounded),
             tooltip: 'Manage Routes',
             onPressed: () {
               Navigator.push(
@@ -340,7 +391,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.account_circle_rounded),
             onPressed: () {
               Navigator.push(
                 context,
@@ -349,82 +400,103 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
+            icon: const Icon(Icons.logout_rounded),
+            onPressed: _showLogoutDialog,
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: [
-                _pendingUsers.isEmpty
-                    ? const Center(child: Text('No pending users! 🎉'))
-                    : ListView.builder(
-                        itemCount: _pendingUsers.length,
-                        itemBuilder: (context, index) {
-                          var user = _pendingUsers[index];
-                          return Card(
-                            margin: const EdgeInsets.all(8),
-                            child: ListTile(
-                              title: Text(
-                                user['name'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+      body: Container(
+        color: Colors.grey[50],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.green))
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  _pendingUsers.isEmpty
+                      ? const Center(child: Text('No pending users! 🎉', style: TextStyle(fontSize: 16, color: Colors.grey)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _pendingUsers.length,
+                          itemBuilder: (context, index) {
+                            var user = _pendingUsers[index];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.green.withOpacity(0.1),
+                                  child: const Icon(Icons.person, color: Colors.green),
+                                ),
+                                title: Text(
+                                  user['name'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  '${user['role']} | ${user['email']}',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                                trailing: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  onPressed: () => _showUserDocumentDialog(user),
+                                  child: const Text('View'),
                                 ),
                               ),
-                              subtitle: Text(
-                                '${user['role']} | ${user['email']}',
-                              ),
-                              trailing: ElevatedButton(
-                                onPressed: () => _showUserDocumentDialog(user),
-                                child: const Text('View Docs'),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                _pendingBuses.isEmpty
-                    ? const Center(child: Text('No pending buses! 🎉'))
-                    : ListView.builder(
-                        itemCount: _pendingBuses.length,
-                        itemBuilder: (context, index) {
-                          var bus = _pendingBuses[index];
-                          return Card(
-                            margin: const EdgeInsets.all(8),
-                            child: ListTile(
-                              title: Text(
-                                bus['busNumber'],
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                            );
+                          },
+                        ),
+                  _pendingBuses.isEmpty
+                      ? const Center(child: Text('No pending buses! 🎉', style: TextStyle(fontSize: 16, color: Colors.grey)))
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _pendingBuses.length,
+                          itemBuilder: (context, index) {
+                            var bus = _pendingBuses[index];
+                            return Card(
+                              elevation: 2,
+                              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.green.withOpacity(0.1),
+                                  child: const Icon(Icons.directions_bus, color: Colors.green),
+                                ),
+                                title: Text(
+                                  bus['busNumber'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  'Capacity: ${bus['capacity']} | Route ID: ${bus['routeId']}',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                                trailing: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  onPressed: () => _showBusDocumentDialog(bus),
+                                  child: const Text('View'),
                                 ),
                               ),
-                              subtitle: Text(
-                                'Capacity: ${bus['capacity']} | Route ID: ${bus['routeId']}',
-                              ),
-                              trailing: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blueAccent,
-                                  foregroundColor: Colors.white,
-                                ),
-                                onPressed: () => _showBusDocumentDialog(bus),
-                                child: const Text('View Docs'),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ],
-            ),
+                            );
+                          },
+                        ),
+                ],
+              ),
+      ),
     );
   }
 }

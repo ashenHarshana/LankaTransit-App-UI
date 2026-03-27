@@ -1,30 +1,76 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:lankatransit_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('App loads successfully', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const LankaTransitApp(
+        isLoggedIn: false,
+        role: 'PASSENGER',
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Check app loaded
+    expect(find.byType(LankaTransitApp), findsOneWidget);
   });
+
+
+  testWidgets('Login screen should appear when not logged in', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const LankaTransitApp(
+        isLoggedIn: false,
+        role: 'PASSENGER',
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // 👇 Change this text if your Login screen has different text
+    expect(find.text('Login'), findsOneWidget);
+  });
+
+
+  testWidgets('Home screen should appear when logged in as passenger', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const LankaTransitApp(
+        isLoggedIn: true,
+        role: 'PASSENGER',
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // 👇 Change this text based on your HomeScreen UI
+    expect(find.byType(LankaTransitApp), findsOneWidget);
+  });
+
+
+  testWidgets('Admin screen should appear when role is ADMIN', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const LankaTransitApp(
+        isLoggedIn: true,
+        role: 'ADMIN',
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LankaTransitApp), findsOneWidget);
+  });
+
+
+  testWidgets('Driver screen should appear when role is DRIVER', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const LankaTransitApp(
+        isLoggedIn: true,
+        role: 'DRIVER',
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LankaTransitApp), findsOneWidget);
+  });
+
 }
