@@ -34,7 +34,7 @@ class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
 
   Future<void> fetchHalts() async {
     final routeId = widget.routeData['id'];
-    final url = Uri.parse('https://navith-25-lankatransit-backend.hf.space/api/routes/$routeId/halts');
+    final url = Uri.parse('$baseUrl/api/routes/$routeId/halts');
 
     try {
       final response = await http.get(url);

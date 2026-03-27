@@ -60,7 +60,7 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
           markerId: const MarkerId('start'),
           position: _startLocation!,
           icon:
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
           infoWindow: InfoWindow(title: "Start: $startName")));
     }
     if (_endLocation != null) {
@@ -97,8 +97,7 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
         setState(() {
           _polylines.add(Polyline(
               polylineId: const PolylineId('existing_route'),
-              color: Colors.green,
-              color: Colors.blueAccent,
+              color: Colors.blueAccent, // Fixed duplicate color
               width: 5,
               points: decodedPoints));
           _isLoading = false;
@@ -146,18 +145,18 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
               } else {
                 for (int i = 0; i < routePoints.length - 1; i++) {
                   double segDist =
-                      _calculateDistance(routePoints[i], routePoints[i + 1]);
+                  _calculateDistance(routePoints[i], routePoints[i + 1]);
                   if (cumulativeDist + segDist >= targetDist) {
                     double fraction = segDist == 0
                         ? 0
                         : (targetDist - cumulativeDist) / segDist;
                     double lat = routePoints[i].latitude +
                         (routePoints[i + 1].latitude -
-                                routePoints[i].latitude) *
+                            routePoints[i].latitude) *
                             fraction;
                     double lng = routePoints[i].longitude +
                         (routePoints[i + 1].longitude -
-                                routePoints[i].longitude) *
+                            routePoints[i].longitude) *
                             fraction;
                     haltPos = LatLng(lat, lng);
                     break;
@@ -228,7 +227,9 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
               "Unknown Halt";
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      print("Error getting address: $e");
+    }
     setState(() => _isSaving = false);
 
     TextEditingController haltNameCtrl = TextEditingController(text: haltName);
@@ -239,14 +240,19 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text('Add Halt to Route ${widget.routeData['routeNumber']}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+        title: Text('Add Halt to Route ${widget.routeData['routeNumber']}',
+            style: const TextStyle(
+                color: Colors.green, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-              child: Text("Distance from Start: ${distance.toStringAsFixed(2)} km",
+              decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Text(
+                  "Distance from Start: ${distance.toStringAsFixed(2)} km",
                   style: const TextStyle(
                       color: Colors.green, fontWeight: FontWeight.bold)),
             ),
@@ -254,10 +260,12 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
             TextField(
                 controller: haltNameCtrl,
                 decoration: InputDecoration(
-                    labelText: 'Halt Name', 
+                    labelText: 'Halt Name',
                     filled: true,
                     fillColor: Colors.green.withOpacity(0.05),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none))),
             const SizedBox(height: 15),
             TextField(
               controller: seqCtrl,
@@ -266,42 +274,22 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                   labelText: 'Sequence Order (e.g., 1, 2, 3)',
                   filled: true,
                   fillColor: Colors.green.withOpacity(0.05),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
-        title: Text('Add Halt to Route ${widget.routeData['routeNumber']}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text("Distance from Start: ${distance.toStringAsFixed(2)} km",
-                style: const TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            TextField(
-                controller: haltNameCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Halt Name', border: OutlineInputBorder())),
-            const SizedBox(height: 10),
-            TextField(
-              controller: seqCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                  labelText: 'Sequence Order (e.g., 1, 2, 3)',
-                  border: OutlineInputBorder()),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none)),
             ),
           ],
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
-                foregroundColor: Colors.white),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10))),
             onPressed: () async {
               if (haltNameCtrl.text.isEmpty || seqCtrl.text.isEmpty) return;
               Navigator.pop(ctx);
@@ -371,20 +359,18 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.green,
+        title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}',
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green, // Kept the green theme from your newer code
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}'),
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
       ),
       body: Stack(
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition:
-                const CameraPosition(target: LatLng(7.8731, 80.7718), zoom: 7),
+            const CameraPosition(target: LatLng(7.8731, 80.7718), zoom: 7),
             markers: _markers,
             polylines: _polylines,
             myLocationEnabled: true,
@@ -401,7 +387,8 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
             left: 20,
             right: 20,
             child: Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               color: Colors.white.withOpacity(0.9),
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
@@ -410,7 +397,10 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                   children: [
                     Text(
                       "Long Press anywhere on the map to add a New Halt.",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.green),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.green),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 5),
@@ -420,19 +410,6 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ],
-                        child: CircularProgressIndicator()))),
-          Positioned(
-            top: 10,
-            left: 10,
-            right: 10,
-            child: Card(
-              color: Colors.white.withOpacity(0.9),
-              child: const Padding(
-                padding: EdgeInsets.all(12.0),
-                child: Text(
-                  "Orange = Existing Halts\nLong Press to add new Halts (Cyan)",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  textAlign: TextAlign.center,
                 ),
               ),
             ),
