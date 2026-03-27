@@ -98,6 +98,7 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
           _polylines.add(Polyline(
               polylineId: const PolylineId('existing_route'),
               color: Colors.green,
+              color: Colors.blueAccent,
               width: 5,
               points: decodedPoints));
           _isLoading = false;
@@ -266,6 +267,25 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                   filled: true,
                   fillColor: Colors.green.withOpacity(0.05),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+        title: Text('Add Halt to Route ${widget.routeData['routeNumber']}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Distance from Start: ${distance.toStringAsFixed(2)} km",
+                style: const TextStyle(
+                    color: Colors.green, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            TextField(
+                controller: haltNameCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Halt Name', border: OutlineInputBorder())),
+            const SizedBox(height: 10),
+            TextField(
+              controller: seqCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                  labelText: 'Sequence Order (e.g., 1, 2, 3)',
+                  border: OutlineInputBorder()),
             ),
           ],
         ),
@@ -277,6 +297,11 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white),
             onPressed: () async {
               if (haltNameCtrl.text.isEmpty || seqCtrl.text.isEmpty) return;
               Navigator.pop(ctx);
@@ -350,6 +375,9 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         elevation: 0,
+        title: Text('Edit Halts - Route ${widget.routeData['routeNumber']}'),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
       ),
       body: Stack(
         children: [
@@ -392,6 +420,19 @@ class _AddHaltMapScreenState extends State<AddHaltMapScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ],
+                        child: CircularProgressIndicator()))),
+          Positioned(
+            top: 10,
+            left: 10,
+            right: 10,
+            child: Card(
+              color: Colors.white.withOpacity(0.9),
+              child: const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Text(
+                  "Orange = Existing Halts\nLong Press to add new Halts (Cyan)",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
