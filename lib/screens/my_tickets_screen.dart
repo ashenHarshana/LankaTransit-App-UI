@@ -48,7 +48,7 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
 
         setState(() {
           _validTickets = allTickets
-              .where((t) => t['status'] == 'VALID' || t['status'] == null)
+              .where((t) => t['status'] == 'VALID' || t['status'] == null || t['status'] == 'ACTIVE')
               .toList();
           _usedTickets = allTickets
               .where((t) => t['status'] == 'USED')
@@ -71,14 +71,18 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     );
   }
 
-  String _formatDate(String dateTimeStr) {
+  String _formatDate(dynamic dateTimeStr) {
+    if (dateTimeStr == null || dateTimeStr.toString().isEmpty) return 'No Date';
     try {
-      final parts = dateTimeStr.split('T');
+      String dateStr = dateTimeStr.toString();
+      if (!dateStr.contains('T')) return dateStr;
+      
+      final parts = dateStr.split('T');
       final date = parts[0];
-      final time = parts[1].substring(0, 5);
+      final time = parts[1].length > 5 ? parts[1].substring(0, 5) : parts[1];
       return '$date at $time';
     } catch (e) {
-      return dateTimeStr;
+      return dateTimeStr.toString();
     }
   }
 
@@ -88,6 +92,14 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
     if (id is int) return id;
     if (id is String) return int.tryParse(id) ?? 0;
     return 0;
+  }
+
+  // Halt නම ලබා ගැනීම සඳහා ශක්තිමත් ක්‍රමයක්
+  String _extractHaltName(dynamic val) {
+    if (val == null) return 'Unknown';
+    if (val is String) return val.isEmpty ? 'Unknown' : val;
+    if (val is Map) return val['haltName']?.toString() ?? 'Unknown';
+    return val.toString();
   }
 
   Widget _buildTicketList(List<dynamic> tickets, bool isUsed) {
@@ -108,6 +120,17 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
       itemBuilder: (context, index) {
         final ticket = tickets[index];
         final ticketId = _getTicketId(ticket);
+        
+        // Backend එකෙන් එන විවිධ key names පරීක්ෂා කිරීම
+        String startPoint = _extractHaltName(ticket['startLocation'] ?? ticket['startHalt'] ?? ticket['startHaltName']);
+        String endPoint = _extractHaltName(ticket['endLocation'] ?? ticket['endHalt'] ?? ticket['endHaltName']);
+        
+        double fare = 0.0;
+        try {
+          fare = double.parse((ticket['fare'] ?? '0').toString());
+        } catch (e) {
+          fare = 0.0;
+        }
 
         return Card(
           elevation: isUsed ? 1 : 3,
@@ -127,11 +150,11 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                         builder: (context) => TicketScreen(
                           ticketId: ticketId,
                           routeData: {
-                            'routeNumber': ticket['routeId'].toString(),
+                            'routeNumber': (ticket['routeNumber'] ?? ticket['routeId'] ?? '').toString(),
                           },
-                          startHalt: {'haltName': ticket['startHalt']},
-                          endHalt: {'haltName': ticket['endHalt']},
-                          ticketPrice: double.parse(ticket['fare'].toString()),
+                          startHalt: {'haltName': startPoint},
+                          endHalt: {'haltName': endPoint},
+                          ticketPrice: fare,
                         ),
                       ),
                     );
@@ -144,27 +167,32 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isUsed
-                              ? Colors.grey[400]
-                              : Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'TICKET ID: ${ticketId != 0 ? ticketId : 'NULL'}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isUsed ? Colors.white : Colors.blueAccent,
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isUsed
+                                ? Colors.grey[400]
+                                : Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'TICKET ID: ${ticketId != 0 ? ticketId : 'N/A'}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: isUsed ? Colors.white : Colors.blueAccent,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 10),
                       Text(
-                        'Rs. ${ticket['fare']}',
+                        'Rs. ${fare.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -177,44 +205,54 @@ class _MyTicketsScreenState extends State<MyTicketsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'From',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                          Text(
-                            ticket['startHalt'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isUsed ? Colors.grey : Colors.black,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'From',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
                             ),
-                          ),
-                        ],
-                      ),
-                      Icon(
-                        Icons.arrow_forward,
-                        color: isUsed ? Colors.grey : Colors.blueAccent,
-                        size: 20,
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text(
-                            'To',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                          Text(
-                            ticket['endHalt'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: isUsed ? Colors.grey : Colors.black,
+                            Text(
+                              startPoint,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isUsed ? Colors.grey : Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: isUsed ? Colors.grey : Colors.blueAccent,
+                          size: 20,
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              'To',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                            Text(
+                              endPoint,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: isUsed ? Colors.grey : Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

@@ -64,6 +64,38 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
     }
   }
 
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Logout Confirmation', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
+        content: const Text('Are you sure you want to log out of LankaTransit?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              await prefs.clear();
+              if (!mounted) return;
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+            },
+            child: const Text('Yes, Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showUserDocumentDialog(Map<String, dynamic> user) {
     showDialog(
       context: context,
@@ -369,15 +401,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen>
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
-            onPressed: () async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-              if (!context.mounted) return;
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
+            onPressed: _showLogoutDialog,
           ),
         ],
       ),
