@@ -1,17 +1,43 @@
-# lankatransit_app
+# 🚌 LankaTransit - Public Transport Management System
 
-A new Flutter project.
+LankaTransit is a comprehensive, full-stack public transport management solution designed to streamline bus scheduling, route management, and digital ticketing in Sri Lanka. The system features a cross-platform mobile application and a robust backend API, providing dedicated interfaces for Admins, Bus Owners, Drivers, and Passengers.
 
-## Getting Started
+## 🌟 Key Features
 
-This project is a starting point for a Flutter application.
+* **Role-Based Access Control (RBAC):** Distinct dashboards and functionalities for Admin, Owner, Driver, and Passenger roles.
+* **Live Location Tracking:** Real-time bus tracking on Google Maps using Firebase integration.
+* **QR-Based Digital Ticketing:** Seamless e-ticket generation for passengers and in-app QR code verification for drivers using `mobile_scanner`.
+* **Dynamic Route & Halt Management:** Interactive map interfaces to plot routes and add strategic halts with distance calculations.
+* **Secure Document Management:** Built-in system for uploading and verifying vehicle and owner documents.
+* **Offline Caching:** Saves recent ticket data locally using `shared_preferences` for quick access.
 
-A few resources to get you started if this is your first Flutter project:
+## 💻 Tech Stack
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+### Frontend (Mobile App)
+* **Framework:** Flutter (Dart)
+* **Mapping:** Google Maps (`Maps_flutter`), OSRM API for routing
+* **Features:** QR Flutter, Mobile Scanner, HTTP
+* **State Management & Caching:** Shared Preferences
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Backend (Server & API)
+* **Framework:** Java Spring Boot
+* **Database:** PostgreSQL (Relational Data Management)
+* **Security:** Spring Security with JWT (JSON Web Tokens) Authentication
+* **Real-time Services:** Firebase
+
+---
+
+## 🚀 Getting Started
+
+Follow these instructions to set up the project locally on your machine.
+
+### Prerequisites
+* [Flutter SDK](https://flutter.dev/docs/get-started/install) (Version 3.10+)
+* [Java Development Kit (JDK)](https://www.oracle.com/java/technologies/javase-downloads.html) (Version 17 or higher)
+* [PostgreSQL](https://www.postgresql.org/download/)
+* [Maven](https://maven.apache.org/download.cgi)
+
+### 1. Backend Setup (Spring Boot)
+1. Navigate to the backend directory:
+   ```bash
+   cd lankatransit
